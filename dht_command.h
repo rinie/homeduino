@@ -1,6 +1,4 @@
 
-#include <DHTlib.h>
-
 dht DHT;
 
 void dht_command() {

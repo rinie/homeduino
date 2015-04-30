@@ -1,4 +1,7 @@
+#include <avr/pgmspace.h>
 #include <SerialCommand.h>
+#include <RFControl.h>
+#include <DHTlib.h>
 
 void argument_error();
 
@@ -6,6 +9,7 @@ SerialCommand sCmd;
 
 #include "rfcontrol_command.h"
 #ifdef KEYPAD_ENABLED
+#include <Keypad.h>
 #include "keypad_command.h"
 #endif
 #include "dht_command.h"
@@ -28,7 +32,7 @@ void setup() {
 	sCmd.addCommand("AR", analog_read_command);
 	sCmd.addCommand("AW", analog_write_command);
 	sCmd.addCommand("PM", pin_mode_command);
-	sCmd.addCommand("RF", rfcontrol_command);    
+	sCmd.addCommand("RF", rfcontrol_command);
 	sCmd.addCommand("PING", ping_command);
 	sCmd.addCommand("DHT", dht_command);
   sCmd.addCommand("RESET", reset_command);
@@ -36,7 +40,7 @@ void setup() {
   sCmd.addCommand("K", keypad_command);
   #endif
 	sCmd.setDefaultHandler(unrecognized);
-	Serial.print("ready\r\n");
+	Serial.print(F("Homeduino Baudrate 115200 ready\r\n"));
 }
 
 void loop() {
@@ -126,7 +130,7 @@ void pin_mode_command() {
 	// OUTPUT 0x1
   	int mode = atoi(arg);
   	pinMode(pin, mode);
-    Serial.print("ACK\r\n");	
+    Serial.print("ACK\r\n");
 }
 
 
@@ -148,10 +152,10 @@ void reset_command() {
 }
 
 void argument_error() {
-	Serial.print("ERR argument_error\r\n");
+	Serial.print(F("ERR argument_error\r\n"));
 }
 // This gets set as the default handler, and gets called when no other command matches.
 void unrecognized(const char *command) {
-	Serial.print("ERR unknown_command\r\n");
+	Serial.print(F("ERR unknown_command\r\n"));
 }
 

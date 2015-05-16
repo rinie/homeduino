@@ -22,6 +22,22 @@ void reset_command();
 void pin_mode_command();
 void ping_command();
 void unrecognized(const char *command);
+#define NODO_HARDWARE
+#undef NINJA_BLOCK
+#ifndef NINJA_BLOCK
+#define MonitorLedPin              13  // bij iedere ontvangst of verzending licht deze led kort op.
+#ifdef NODO_HARDWARE
+#define IR_ReceiveDataPin           3  // Op deze input komt het IR signaal binnen van de TSOP. Bij HIGH bij geen signaal.
+#define IR_TransmitDataPin         11  // Aan deze pin zit een zender IR-Led. (gebufferd via transistor i.v.m. hogere stroom die nodig is voor IR-led)
+#define RF_TransmitPowerPin         4  // +5 volt / Vcc spanning naar de zender.
+#define RF_TransmitDataPin          5  // data naar de zender
+#define RF_ReceiveDataPin           2  // Op deze input komt het 433Mhz-RF signaal binnen. LOW bij geen signaal.
+#define RF_ReceivePowerPin         12  // Spanning naar de ontvanger via deze pin.
+#endif
+#else
+#define BLUE_STAT_LED_PIN 	7
+#define MonitorLedPin              BLUE_STAT_LED_PIN  // bij iedere ontvangst of verzending licht deze led kort op.
+#endif
 
 
 void setup() {
@@ -40,7 +56,31 @@ void setup() {
   sCmd.addCommand("K", keypad_command);
   #endif
 	sCmd.setDefaultHandler(unrecognized);
+#ifndef NINJA_BLOCK
+#ifdef NODO_HARDWARE
+  pinMode(IR_ReceiveDataPin,INPUT);
+  pinMode(RF_ReceiveDataPin,INPUT);
+  pinMode(RF_TransmitDataPin,OUTPUT);
+  pinMode(RF_TransmitPowerPin,OUTPUT);
+  pinMode(RF_ReceivePowerPin,OUTPUT);
+  pinMode(IR_TransmitDataPin,OUTPUT);
+#endif
+
+  pinMode(MonitorLedPin,OUTPUT);
+#ifdef NODO_HARDWARE
+  digitalWrite(IR_ReceiveDataPin,HIGH);  // schakel pull-up weerstand in om te voorkomen dat er rommel binnenkomt als pin niet aangesloten
+  digitalWrite(RF_ReceiveDataPin,HIGH);  // schakel pull-up weerstand in om te voorkomen dat er rommel binnenkomt als pin niet aangesloten
+  digitalWrite(IR_ReceiveDataPin,HIGH);  // schakel pull-up weerstand in om te voorkomen dat er rommel binnenkomt als pin niet aangesloten
+  digitalWrite(RF_ReceiveDataPin,HIGH);  // schakel pull-up weerstand in om te voorkomen dat er rommel binnenkomt als pin niet aangesloten
+  // nodo hardware
+  digitalWrite(RF_ReceivePowerPin,HIGH); // Spanning naar de RF ontvanger aan.
+#endif
+#else
+	pinMode(BLUE_STAT_LED_PIN, OUTPUT);
+	digitalWrite(BLUE_STAT_LED_PIN, LOW);	        // Power on Status
+#endif
 	Serial.print(F("Homeduino Baudrate 115200 ready\r\n"));
+	Serial.print(F("try RF receive 0\r\n"));
 }
 
 void loop() {

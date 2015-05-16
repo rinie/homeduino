@@ -124,7 +124,8 @@ Example: `DR 4`
 
 Resonds with `ACK` or `ACK value`. 
 
-** Rinie added recognition
+Rinie added recognition
+-----------------------
 
 ```
 Homeduino Baudrate 115200 ready
@@ -143,7 +144,7 @@ ACK
 RF receive 44#4 {P20/0 S13/7} H[ 3908  560]  F[  560 5136]  [  560 1724] 5115000400
 ```
 
-* KAKU BEW
+* KAKU NEW
 ```
 RF receive 132#4 {P64/0 S32/32} H[  276 2720]  F[  276 10324]  [  276 1344] 11114441411444414111114441111111
 ```

@@ -1,6 +1,4 @@
 
-void rfcontrol_command_send();
-void rfcontrol_command_receive();
 typedef unsigned long ulong; //RKR U N S I G N E D is so verbose
 typedef unsigned int uint;
 
@@ -93,20 +91,25 @@ void rfcontrol_loop() {
 	bool fHeader = false;
 	bool fFooter = false;
 	bool fPrintHex = false;
+	psCount = (psiNibbles[0] * 2) - (((psiNibbles[psiNibbles[0]] & 0x0F) == 0x0F) ? 1 : 0);
+#if 0
 	if (!(package>0 /* || (psMinMaxCount > 0)*/) ) {
+			  Serial.print(F("RF receive NO repeat "));
+			  Serial.print(psCount);
+			  Serial.println();
 		      RFControl::continueReceiving();
 		      return;
 	}
+#endif
 	  digitalWrite(MonitorLedPin,HIGH);
-	psCount = (psiNibbles[0] * 2) - (((psiNibbles[psiNibbles[0]] & 0x0F) == 0x0F) ? 1 : 0);
-      Serial.print("RF receive ");
+      Serial.print(F("RF receive "));
       Serial.print(psCount);
       Serial.print("#");
       Serial.print(package);
-      for(unsigned int i=1; i <= psiNibbles[0]; i++) {
-		    byte pulse = ((psiNibbles[i] >> 4) & 0x0F);
-          	byte space = ((psiNibbles[i]) & 0x0F);
-          	if (i == 1) { // check header
+	  for(unsigned int i=1; i <= psiNibbles[0]; i++) {
+			byte pulse = ((psiNibbles[i] >> 4) & 0x0F);
+			byte space = ((psiNibbles[i]) & 0x0F);
+			if (i == 1) { // check header
 				fHeader = (pulse > 1) || (space > 1);
 				continue;
 			}
@@ -115,7 +118,7 @@ void rfcontrol_loop() {
 				continue;
 			}
 
-          	switch (pulse) {
+			switch (pulse) {
 			case 0:
 				pulseCount0++;
 				break;
@@ -126,7 +129,7 @@ void rfcontrol_loop() {
 				pulseCountX++;
 				break;
 			}
-          	switch (space) {
+			switch (space) {
 			case 0:
 				spaceCount0++;
 				break;
@@ -137,23 +140,23 @@ void rfcontrol_loop() {
 				spaceCountX++;
 				break;
 			}
-      }
+	  }
 	  if ((pulseCountX > 0) || (spaceCountX > 0)) {
 		  // don't bother
 	  }
 	  else {
-	      Serial.print(" {P");
-	      Serial.print(pulseCount0);
-	      Serial.print("/");
-	      Serial.print(pulseCount1);
-	      Serial.print(" S");
-	      Serial.print(spaceCount0);
-	      Serial.print("/");
-	      Serial.print(spaceCount1);
-	      Serial.print("}");
-	      fPrintHex = true;
+		  Serial.print(" {P");
+		  Serial.print(pulseCount0);
+		  Serial.print("/");
+		  Serial.print(pulseCount1);
+		  Serial.print(" S");
+		  Serial.print(spaceCount0);
+		  Serial.print("/");
+		  Serial.print(spaceCount1);
+		  Serial.print("}");
+		  fPrintHex = true;
 	  }
-	  if (fPrintHex) {
+	  if ((package>0) && fPrintHex) {
 		  if (fHeader) {
 			unsigned int i=1;
 			byte pulse = ((psiNibbles[i] >> 4) & 0x0F);
@@ -181,7 +184,7 @@ void rfcontrol_loop() {
 		unsigned long bucket1 = ((psMicroMax[1] + psMicroMin[1]) / 2)  * pulse_length_divider;
 		PrintNum(bucket0, ' ', 4);
 		PrintNum(bucket1, ' ', 4);
-		Serial.print("] ");
+		Serial.print("] 0x");
 
 		unsigned int j = 0;
 		byte x = 0;
@@ -232,41 +235,26 @@ void rfcontrol_loop() {
 				Serial.print(((psiNibbles[i]) & 0x0F),HEX);
 		  }
 		}
-      Serial.print("\r\n");
+      Serial.println();
 	  digitalWrite(MonitorLedPin,LOW);
 #endif
       RFControl::continueReceiving();
     }
 }
 
-void rfcontrol_command() {
-  char* arg = sCmd.next();
-  if(arg == NULL) {
-    argument_error();
-    return;
-  }
-  if (strcmp(arg, "send") == 0) {
-    rfcontrol_command_send();
-  } else if (strcmp(arg, "receive") == 0) {
-    rfcontrol_command_receive();
-  } else {
-    argument_error();
-  }
-}
-
-void rfcontrol_command_receive() {
+void rfcontrol_command_receive(bool fIsRf = true) {
   char* arg = sCmd.next();
   if(arg == NULL) {
     argument_error();
     return;
   }
   int interrupt_pin = atoi(arg);
-  RFControl::startReceiving(interrupt_pin);
+  RFControl::startReceiving(interrupt_pin, fIsRf);
   Serial.print("ACK\r\n");
 }
 
 
-void rfcontrol_command_send() {
+void rfcontrol_command_send(bool fIsRf = true) {
   char* arg = sCmd.next();
   if(arg == NULL) {
     argument_error();
@@ -299,4 +287,28 @@ void rfcontrol_command_send() {
   }
   RFControl::sendByCompressedTimings(transmitter_pin, buckets, arg, repeats);
   Serial.print("ACK\r\n");
+}
+
+void rf_ircontrol_command(bool fIsRf = true) {
+  char* arg = sCmd.next();
+  if(arg == NULL) {
+    argument_error();
+    return;
+  }
+  if (strcmp(arg, "send") == 0) {
+    rfcontrol_command_send(fIsRf);
+  } else if (strcmp(arg, "receive") == 0) {
+    rfcontrol_command_receive(fIsRf);
+  } else {
+    argument_error();
+  }
+}
+
+void rfcontrol_command() {
+	rf_ircontrol_command();
+}
+
+
+void ircontrol_command() {
+	rf_ircontrol_command(false);
 }

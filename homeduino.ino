@@ -49,6 +49,7 @@ void setup() {
 	sCmd.addCommand("AW", analog_write_command);
 	sCmd.addCommand("PM", pin_mode_command);
 	sCmd.addCommand("RF", rfcontrol_command);
+	sCmd.addCommand("IR", ircontrol_command);
 	sCmd.addCommand("PING", ping_command);
 	sCmd.addCommand("DHT", dht_command);
   sCmd.addCommand("RESET", reset_command);
@@ -68,8 +69,6 @@ void setup() {
 
   pinMode(MonitorLedPin,OUTPUT);
 #ifdef NODO_HARDWARE
-  digitalWrite(IR_ReceiveDataPin,HIGH);  // schakel pull-up weerstand in om te voorkomen dat er rommel binnenkomt als pin niet aangesloten
-  digitalWrite(RF_ReceiveDataPin,HIGH);  // schakel pull-up weerstand in om te voorkomen dat er rommel binnenkomt als pin niet aangesloten
   digitalWrite(IR_ReceiveDataPin,HIGH);  // schakel pull-up weerstand in om te voorkomen dat er rommel binnenkomt als pin niet aangesloten
   digitalWrite(RF_ReceiveDataPin,HIGH);  // schakel pull-up weerstand in om te voorkomen dat er rommel binnenkomt als pin niet aangesloten
   // nodo hardware

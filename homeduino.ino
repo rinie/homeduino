@@ -7,7 +7,6 @@ void argument_error();
 
 SerialCommand sCmd;
 
-#include "rfcontrol_command.h"
 #ifdef KEYPAD_ENABLED
 #include <Keypad.h>
 #include "keypad_command.h"
@@ -22,8 +21,17 @@ void reset_command();
 void pin_mode_command();
 void ping_command();
 void unrecognized(const char *command);
-#define NODO_HARDWARE
+#undef NODO_HARDWARE
 #undef NINJA_BLOCK
+#define MOTEINO
+#ifdef MOTEINO
+#include <SPI.h>
+#include <RFM69.h>
+#define NODEID      1
+#define NETWORKID   100
+#define FREQUENCY   RF69_433MHZ //Match this with the version of your Moteino! (others: RF69_433MHZ, RF69_868MHZ)
+RFM69 radio;
+#endif
 #ifndef NINJA_BLOCK
 #define MonitorLedPin              13  // bij iedere ontvangst of verzending licht deze led kort op.
 #ifdef NODO_HARDWARE
@@ -38,7 +46,10 @@ void unrecognized(const char *command);
 #define BLUE_STAT_LED_PIN 	7
 #define MonitorLedPin              BLUE_STAT_LED_PIN  // bij iedere ontvangst of verzending licht deze led kort op.
 #endif
+#include "rfcontrol_command.h"
 
+int lastRssi = -100;
+unsigned long lastMillis = 0;
 
 void setup() {
 	Serial.begin(115200);
@@ -58,6 +69,16 @@ void setup() {
   #endif
 	sCmd.setDefaultHandler(unrecognized);
 #ifndef NINJA_BLOCK
+#ifdef MOTEINO
+  delay(10);
+  pinMode(3,INPUT);
+  pinMode(4,INPUT);
+  radio.initialize_OOK(FREQUENCY);
+//  radio.radioOnOff(true);
+  //radio.setHighPower(); //uncomment only for RFM69HW!
+  //radio.promiscuous(promiscuousMode);
+	Serial.println(F("Moteino 433.92\r\n"));
+#endif
 #ifdef NODO_HARDWARE
   pinMode(IR_ReceiveDataPin,INPUT);
   pinMode(RF_ReceiveDataPin,INPUT);
@@ -83,6 +104,7 @@ void setup() {
 }
 
 void loop() {
+	int rssi;
 	// handle serial command
 	sCmd.readSerial();
 	// handle rf control receiving
@@ -91,6 +113,35 @@ void loop() {
 	// handle keypad keypress
 	keypad_loop();
   #endif
+#if 0
+  if (radio.receiveDone())
+  {
+    Serial.print('[');Serial.print(radio.SENDERID, DEC);Serial.print("] ");
+    Serial.print(" [RX_RSSI:");Serial.print(radio.readRSSI());Serial.print("]");
+    Serial.print(" [DATALEN:");Serial.print(radio.DATALEN);Serial.print("]");
+    Serial.println();
+   // Blink(LED,3);
+  }
+  else {
+	  	rssi = radio.readRSSI(false);
+		unsigned long now = millis();
+	  	if (rssi > lastRssi) {
+			if (lastMillis == 0) {
+				lastMillis = now;
+			}
+			//if (now-lastMillis > 10000) {
+				Serial.print(now-lastMillis);
+				Serial.print(" [RX_RSSI:");Serial.print(radio.readRSSI());Serial.print("]");
+				Serial.println();
+				lastMillis = now;
+			//}
+			lastRssi = rssi;
+		}
+		else if (now-lastMillis > 10000) {
+			lastRssi = rssi;
+		}
+  }
+#endif
 }
 
 void digital_read_command() {
